@@ -1,7 +1,13 @@
 /** A Pressable that springs to 0.96 while pressed. The base tactile feel. */
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  StyleSheet,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,12 +19,15 @@ import { spring } from '@/theme/tokens';
 interface PressableScaleProps extends PressableProps {
   scaleTo?: number;
   haptic?: boolean;
+  /** Stretch the animated wrapper (and the pressable) to fill its flex parent. */
+  fill?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
 export function PressableScale({
   scaleTo = 0.96,
   haptic = true,
+  fill = false,
   onPressIn,
   onPressOut,
   onPress,
@@ -30,7 +39,7 @@ export function PressableScale({
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={[animatedStyle, fill && styles.fill]}>
       <Pressable
         onPressIn={(e) => {
           scale.value = withSpring(scaleTo, spring.bouncy);
@@ -44,7 +53,7 @@ export function PressableScale({
           if (haptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onPress?.(e);
         }}
-        style={style}
+        style={[style, fill && styles.fill]}
         {...rest}
       >
         {children}
@@ -52,3 +61,7 @@ export function PressableScale({
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+});

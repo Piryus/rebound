@@ -48,6 +48,7 @@ export default function TrendsScreen() {
           return (
             <PressableScale
               key={r.days}
+              fill
               onPress={() => setRangeIdx(i)}
               style={[styles.segItem, active && styles.segItemActive]}
             >
@@ -105,6 +106,7 @@ const styles = StyleSheet.create({
   },
   segItem: {
     flex: 1,
+    minWidth: 56,
     paddingVertical: 11,
     alignItems: 'center',
     borderRadius: radius.pill,

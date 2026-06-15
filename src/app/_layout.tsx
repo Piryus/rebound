@@ -19,7 +19,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet, TextInput } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -46,6 +46,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
+
+  // When the keyboard is dismissed, blur any still-focused input so the cursor
+  // stops flashing (Android keeps the field focused after hiding the keyboard).
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidHide', () => {
+      TextInput.State.currentlyFocusedInput()?.blur();
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!loaded) return null;
 

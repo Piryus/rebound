@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Txt } from '@/components/Txt';
-import { palette } from '@/theme/colors';
+import { inkSoft, palette } from '@/theme/colors';
 import { fonts, radius, shadow, spacing, spring, type } from '@/theme/tokens';
 
 const TRACK_HEIGHT = 14;
@@ -23,18 +23,11 @@ interface ScoreSliderProps {
   value: number;
   onChange: (value: number) => void;
   accent: string;
-  lowLabel: string;
-  highLabel: string;
+  /** Short sentence describing the current value, to help the user pick. */
+  hint: string;
 }
 
-export function ScoreSlider({
-  label,
-  value,
-  onChange,
-  accent,
-  lowLabel,
-  highLabel,
-}: ScoreSliderProps) {
+export function ScoreSlider({ label, value, onChange, accent, hint }: ScoreSliderProps) {
   const width = useSharedValue(0);
   const pos = useSharedValue(value);
 
@@ -101,8 +94,8 @@ export function ScoreSlider({
       </GestureDetector>
 
       <View style={styles.footer}>
-        <Txt variant="caption">{lowLabel}</Txt>
-        <Txt variant="caption">{highLabel}</Txt>
+        <View style={[styles.hintDot, { backgroundColor: accent }]} />
+        <Txt style={styles.hint}>{hint}</Txt>
       </View>
     </View>
   );
@@ -168,7 +161,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  hintDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  hint: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: type.small,
+    color: inkSoft,
   },
 });

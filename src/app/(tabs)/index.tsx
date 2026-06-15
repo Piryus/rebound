@@ -1,22 +1,24 @@
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { type ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { BandBadge } from '@/components/BandBadge';
 import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Confetti } from '@/components/Confetti';
+import { HabitsCard } from '@/components/HabitsCard';
 import { Screen } from '@/components/Screen';
 import { ScoreDial } from '@/components/ScoreDial';
 import { ScoreSlider } from '@/components/ScoreSlider';
 import { Txt } from '@/components/Txt';
 import * as repo from '@/data/entriesRepository';
 import { longDate, todayKey } from '@/lib/date';
+import { useScrollToEnd } from '@/lib/useKeyboardScroll';
 import { syncReminder } from '@/notifications/sync';
-import { defaultScores, DIMENSIONS } from '@/scoring/dimensions';
+import { defaultScores, describe, DIMENSIONS } from '@/scoring/dimensions';
 import { CELEBRATION_THRESHOLD, computeScore, getBand, SCORE_NAME } from '@/scoring/score';
 import { APP_NAME, GREETINGS } from '@/theme/brand';
 import { palette } from '@/theme/colors';
@@ -26,6 +28,8 @@ import type { DimensionKey, Entry, Scores } from '@/types';
 export default function TodayScreen() {
   const db = useSQLiteContext();
   const today = todayKey();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToEnd = useScrollToEnd(scrollRef);
 
   const [scores, setScores] = useState<Scores>(defaultScores());
   const [note, setNote] = useState('');
@@ -74,7 +78,7 @@ export default function TodayScreen() {
 
   return (
     <View style={styles.fill}>
-      <Screen>
+      <Screen ref={scrollRef}>
         <View style={styles.brandRow}>
           <BrandMark size={30} />
           <Txt style={styles.wordmark}>{APP_NAME}</Txt>
@@ -108,8 +112,7 @@ export default function TodayScreen() {
                 value={scores[d.key]}
                 onChange={(v) => setDim(d.key, v)}
                 accent={d.accent}
-                lowLabel={d.lowLabel}
-                highLabel={d.highLabel}
+                hint={describe(d.key, scores[d.key])}
               />
             </View>
           ))}
@@ -126,6 +129,7 @@ export default function TodayScreen() {
             placeholder="Anything worth remembering — what helped, what hurt, how you felt…"
             placeholderTextColor={palette.mist}
             multiline
+            onFocus={scrollToEnd}
             style={styles.noteInput}
           />
         </Card>
@@ -143,6 +147,8 @@ export default function TodayScreen() {
             Logged. See you tomorrow.
           </Txt>
         ) : null}
+
+        <HabitsCard date={today} onInputFocus={scrollToEnd} />
       </Screen>
 
       <Confetti visible={celebrate} onDone={() => setCelebrate(false)} />

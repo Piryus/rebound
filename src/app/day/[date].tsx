@@ -1,13 +1,14 @@
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BandBadge } from '@/components/BandBadge';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { HabitsCard } from '@/components/HabitsCard';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/PressableScale';
 import { ScoreDial } from '@/components/ScoreDial';
@@ -15,7 +16,8 @@ import { ScoreSlider } from '@/components/ScoreSlider';
 import { Txt } from '@/components/Txt';
 import * as repo from '@/data/entriesRepository';
 import { isToday, longDate } from '@/lib/date';
-import { defaultScores, DIMENSIONS } from '@/scoring/dimensions';
+import { useKeyboardHeight, useScrollToEnd } from '@/lib/useKeyboardScroll';
+import { defaultScores, describe, DIMENSIONS } from '@/scoring/dimensions';
 import { computeScore, getBand, SCORE_NAME } from '@/scoring/score';
 import { palette } from '@/theme/colors';
 import { fonts, shadow, spacing, type } from '@/theme/tokens';
@@ -25,6 +27,9 @@ export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToEnd = useScrollToEnd(scrollRef);
+  const keyboardHeight = useKeyboardHeight();
 
   const [scores, setScores] = useState<Scores>(defaultScores());
   const [note, setNote] = useState('');
@@ -86,9 +91,12 @@ export default function DayDetailScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        ref={scrollRef}
+        contentContainerStyle={[styles.content, { paddingBottom: spacing.huge + keyboardHeight }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         <Card style={styles.hero} padding={spacing.xxl}>
           <Txt variant="caption" style={styles.scoreLabel}>
@@ -108,8 +116,7 @@ export default function DayDetailScreen() {
                 value={scores[d.key]}
                 onChange={(v) => setDim(d.key, v)}
                 accent={d.accent}
-                lowLabel={d.lowLabel}
-                highLabel={d.highLabel}
+                hint={describe(d.key, scores[d.key])}
               />
             </View>
           ))}
@@ -123,9 +130,12 @@ export default function DayDetailScreen() {
             placeholder="Add a note…"
             placeholderTextColor={palette.mist}
             multiline
+            onFocus={scrollToEnd}
             style={styles.noteInput}
           />
         </Card>
+
+        <HabitsCard date={date} manageable={false} />
 
         <Button label={existed ? 'Update' : 'Save'} onPress={onSave} loading={saving} style={styles.save} />
         {existed ? (

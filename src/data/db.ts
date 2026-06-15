@@ -26,5 +26,23 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
     await db.execAsync('PRAGMA user_version = 1');
     version = 1;
   }
-  // Future migrations: if (version === 1) { ...; version = 2; }
+
+  if (version === 1) {
+    // Habits: simple daily checklist. A row in habit_logs = done that day.
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS habits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        createdAt INTEGER NOT NULL,
+        sortOrder INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS habit_logs (
+        habitId INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        PRIMARY KEY (habitId, date)
+      );
+    `);
+    await db.execAsync('PRAGMA user_version = 2');
+    version = 2;
+  }
 }
